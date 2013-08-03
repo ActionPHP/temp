@@ -30,3 +30,19 @@ Views
 */
 
 })();
+
+var options = [
+
+    "Size" : {
+               "id": 1,
+               "name": "Size",
+               "options": [
+                       
+                           { "id": "1", "value": "S", "position":"1" }
+
+                           ]
+
+              }
+
+
+];
