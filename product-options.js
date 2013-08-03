@@ -23,7 +23,10 @@ Collections
 - Options
 - OptionValues
 
+Views
 
+- OptionsSandbox ({ collection: Options });
+- Option({ collection: OptionValues });
 */
 
 })();
