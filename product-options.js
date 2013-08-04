@@ -1,3 +1,5 @@
+<script type="text/javascript">
+
 (function(){
 
 App.Models.Option = Backbone.Model.extend({
@@ -15,7 +17,7 @@ App.Collections.OptionValues = Backbone.Collection.extend({});
 
 App.Views.OptionsSandbox = Backbone.View.extend({
 
-    el: "#wpcart-options-sandbox",
+	el: "#wpcart-product-options",
 
 	initialize: function() {
 		// body...
@@ -23,10 +25,31 @@ App.Views.OptionsSandbox = Backbone.View.extend({
 
 	render: function(){
 
+		this.collection = new App.Collections.Options;
+
+		this.collection.url = '';
+
+		this.collection.fetch({
+
+			success: function(options){
+
+				_.each(this.collection.models, function(option){
+
+					this.addOption(option);
+
+				});
+
+			}
+
+		});
 
 	},
 
-	addOption: function(){
+	addOption: function(option){
+
+		var optionView = new App.Views.Option({ model: options });
+		var _view = optionView.render().el;
+		this.$el.append(optionView);
 
 	}
 
@@ -35,7 +58,51 @@ App.Views.OptionsSandbox = Backbone.View.extend({
 });
 
 
-App.Views.Option = Backbone.View.extend({});
+App.Views.Option = Backbone.View.extend({
+
+	tagName: 'li',
+
+	initialize: function(){
+
+	},
+
+	render: function(){
+
+		var template = _.template($('#wpcart-product-option-template'));
+		var view = template(this.model.toJSON());
+
+		var optionValueView = new App.Views.OptionValue({collection: this.model.options, $el: view.find('.wpcart-product-option-values')});
+		var valuesView = optionValueView.render().el;
+
+
+
+	},
+
+
+
+});
+
+App.Views.OptionValue = Backbone.View.extend({
+
+	//tagName: 'li',
+
+	initialize: function(){
+
+	},
+
+	render: function(){
+
+		var template = _.template($('#wpcart-product-option-value-template'));
+		_.each(this.collection.models, function(optionValue){
+
+			this.$el.append(template(optionValue.toJSON()));
+
+		});
+		
+		return this;
+	},
+
+});
 
 /**
 
@@ -53,7 +120,7 @@ Views
 
 - OptionsSandbox ({ collection: Options }); //Contains all the options and their values
 - Option({ collection: OptionValues }); // Contains the option and the values
-- OptionValueItem //Contains a particular option value
+- OptionValue //Contains a particular option value
 */
 
 })();
@@ -76,3 +143,5 @@ var options = [
 
 
 ];
+
+</script>
