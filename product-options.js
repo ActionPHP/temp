@@ -1,5 +1,3 @@
-<script type="text/javascript">
-
 (function(){
 
 App.Models.Option = Backbone.Model.extend({
@@ -143,5 +141,3 @@ var options = [
 
 
 ];
-
-</script>
