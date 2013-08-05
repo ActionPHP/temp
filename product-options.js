@@ -38,7 +38,63 @@
 	</script>
 
 	<script type="text/template" id="wpcart-product-option-value-template" >
-	<span id="wpcart-product-option-value-<%= id %>"><%= value %></span>
+	<span id="wpcart-product-option-value-<%= id %>" class="wpcart-product-option-value"><%= value %></span>
+	</script>
+	<script type="text/javascript">
+	//Simple inline edit
+	
+	$.fn.ineditor = function(){
+
+		this.click(function(){
+
+			var _edited = $(this);
+			
+
+			if(!_edited.hasClass('actionphp-ineditor')) {
+					
+					
+					var _value = _edited.html();
+					var _input = '<input type="text" value="' + _value + '" class="actionphp-ineditor-input" />';
+
+					_edited.addClass('actionphp-ineditor');
+					_edited.html(_input);
+					_edited.find('.actionphp-ineditor-input').focus();
+
+					var _edited_input = _edited.find('.actionphp-ineditor-input');
+
+					_edited_input.blur(function(){
+
+						_edited.html(_edited_input.val());
+						_edited.removeClass('actionphp-ineditor');
+
+					});
+			} 
+
+			_edited.keydown(function(e){
+
+			if(e.keyCode == 13){
+
+				$('.actionphp-ineditor-input').trigger('blur');
+			}
+
+			});
+
+		});
+
+		
+
+		$(document).click(function(e){
+			//	console.log(this);
+				//console.log(e.target);
+				if(!$(e.target).hasClass('actionphp-ineditor-input') && !$(e.target).hasClass('actionphp-ineditor') ){
+
+					$('.actionphp-ineditor-input').trigger('blur');
+				}
+			});
+
+
+	}
+
 	</script>
 
 	<script type="text/javascript">
@@ -89,7 +145,6 @@
 		initialize: function() {
 			
 			vent.on('product:options', this.render(), this);
-			vent.on('option-value-order:change', this.saveOptions, this);
 		},
 
 		render: function(){
@@ -141,7 +196,7 @@
 
 		saveOptions: function(){
 
-			console.log(this.collection.toJSON());
+			//console.log(this.collection.toJSON());
 		}
 
 
@@ -167,11 +222,11 @@
 			var optionValues = new App.Collections.OptionValues(this.model.get('options'));
 
 			var optionValueList = $(this.$el).find('.wpcart-product-option-values');
-
+			var that = this;
 			$( optionValueList ).sortable({
 
 				update: function (event, ui) {
-					 console.log(ui);
+					
 					vent.trigger('option-value-order:change');
 
 				}
@@ -223,6 +278,11 @@
 
 		tagName: 'li',
 
+		initialize: function(){
+
+			vent.on('option-value-order:change', this.saveOptionValue, this);
+		},
+
 		render: function() {
 
 			var template = _.template($('#wpcart-product-option-value-template').html());
@@ -231,6 +291,20 @@
 
 			return this;
 
+		},
+
+		saveOptionValue: function(){
+
+			//Let's get the index of the option value in the list, and use that as it's
+			// position.
+			// 
+			this.model.set('position', this.$el.index());
+
+			//Let's get the actual value from the 'wpcart-product-option-value' span
+			var value = this.$el.find('.wpcart-product-option-value').html();
+			this.model.set('value', value);
+
+			console.log(this.model.get("value") + this.$el.index());
 		}
 
 
@@ -248,8 +322,8 @@
 		
 	new App.Views.OptionsSandbox;
 	vent.trigger('product:options');
-
-
+	$('.wpcart-product-option-value').ineditor();
+	$('.wpcart-product-option-name').ineditor();
 
 		})();
 	</script>
