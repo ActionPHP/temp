@@ -1,103 +1,3 @@
-<?php
-
-	/**
-	 * 
-	 * 	Ok so we have two Models
-	 *  - ProductOption
-	 *    - Collection options
-	 *  - ProductOptionValue
-	 * 
-	 * 
-	 */
-?>
-<html>
-<head>
-	<title>Product options</title>
-
-	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js" ></script>
-	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js"></script>
-	<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
-	<link href="style.css" rel="stylesheet">
-	
-</head>
-<body>
-	<div id="wpcart-options-sandbox" >
-		<span><strong>Product options</strong></span>
-
-		<ul id="wpcart-product-options"></ul>
-		<button class="btn btn-primary" >Save</button>
-	</div>
-
-	<!-- Templates -->
-
-	<script type="text/template" id="wpcart-product-option-template" >
-	<span id="wpcart-product-option-<%= id %>" class="wpcart-product-option-name"><%= name %></span>
-	<ul class="wpcart-product-option-values"></ul>
-	</script>
-
-	<script type="text/template" id="wpcart-product-option-value-template" >
-	<span id="wpcart-product-option-value-<%= id %>" class="wpcart-product-option-value"><%= value %></span>
-	</script>
-	<script type="text/javascript">
-	//Simple inline edit
-	
-	$.fn.ineditor = function(){
-
-		this.click(function(){
-
-			var _edited = $(this);
-			
-
-			if(!_edited.hasClass('actionphp-ineditor')) {
-					
-					
-					var _value = _edited.html();
-					var _input = '<input type="text" value="' + _value + '" class="actionphp-ineditor-input" />';
-
-					_edited.addClass('actionphp-ineditor');
-					_edited.html(_input);
-					_edited.find('.actionphp-ineditor-input').focus();
-
-					var _edited_input = _edited.find('.actionphp-ineditor-input');
-
-					_edited_input.blur(function(){
-
-						_edited.html(_edited_input.val());
-						_edited.removeClass('actionphp-ineditor');
-
-					});
-			} 
-
-			_edited.keydown(function(e){
-
-			if(e.keyCode == 13){
-
-				$('.actionphp-ineditor-input').trigger('blur');
-			}
-
-			});
-
-		});
-
-		
-
-		$(document).click(function(e){
-			//	console.log(this);
-				//console.log(e.target);
-				if(!$(e.target).hasClass('actionphp-ineditor-input') && !$(e.target).hasClass('actionphp-ineditor') ){
-
-					$('.actionphp-ineditor-input').trigger('blur');
-				}
-			});
-
-
-	}
-
-	</script>
-
-	<script type="text/javascript">
 
 		(function(){
 
@@ -113,6 +13,11 @@
 
 			App.Models.Option = Backbone.Model.extend({
 
+				defaults: {
+
+					id: null,
+					options: [{id: null, value: null }]
+				}
 
 			});
 
@@ -145,6 +50,12 @@
 		initialize: function() {
 			
 			vent.on('product:options', this.render(), this);
+		},
+
+		events: {
+
+			"click #wpcart-options-create-button" : "createOption",
+
 		},
 
 		render: function(){
@@ -189,6 +100,9 @@
 			var _view = optionView.render();
 			
 			this.$el.append(_view.el);
+			this.$el.find('.wpcart-product-option-name').ineditor();
+
+
 			var $el = _view.$el;
 			option.set('position', $el.index());
 
@@ -197,6 +111,16 @@
 		saveOptions: function(){
 
 			//console.log(this.collection.toJSON());
+		},
+
+		createOption: function(){
+
+			var optionName = $('#wpcart-options-create-name').val();
+			var optionValues = Array();
+			var option = new App.Models.Option({ name: optionName });
+
+			sandbox.addOption(option);
+
 		}
 
 
@@ -210,6 +134,15 @@
 
 		initialize: function(){
 
+			this.optionValueView = new App.Views.OptionValues();
+			console.log(this);
+
+		},
+
+		events: {
+
+			"click .wpcart-option-value-create-button" : "addOptionValue"
+
 		},
 
 		render: function(){
@@ -218,11 +151,10 @@
 			var view = template(this.model.toJSON());
 			this.$el.html(view);
 
-
 			var optionValues = new App.Collections.OptionValues(this.model.get('options'));
 
 			var optionValueList = $(this.$el).find('.wpcart-product-option-values');
-			var that = this;
+			//var that = this;
 			$( optionValueList ).sortable({
 
 				update: function (event, ui) {
@@ -232,20 +164,31 @@
 				}
 			});
 
-			var optionValueView = new App.Views.OptionValues({collection: optionValues, el: optionValueList });
+			console.log(this);
+			this.optionValueView.collection = optionValues;
+			this.optionValueView.$el = optionValueList;
+
+
+			//this.optionValueView = new App.Views.OptionValues({collection: optionValues, el: optionValueList });
 			
 			//This will also add the option values to the current view
-			var valuesView = optionValueView.render().el;
-			
+			var valuesView = this.optionValueView.render().el;
+			//console.log(optionValueView);
 			this.$el.addClass("wpcart-product-option");
 
 			return this;
 		},
 
-		addOptionValue: function(value){
+		addOptionValue: function(){
+
+			var optionValueList = $(this.$el).find('.wpcart-product-option-values');
+
+			var optionValue = new App.Models.OptionValue({id: null, value: null});
+			this.optionValueView.addOptionValue(optionValue);
+
+		},
 
 
-		}
 
 
 
@@ -254,23 +197,36 @@
 	App.Views.OptionValues = Backbone.View.extend({
 
 		initialize: function(){
-
+			
+			vent.on('optionValue:add', this.addOptionValue, this);
 		},
 
 		render: function(){
+			
 			var that = this;
-
 			_.each(this.collection.models, function(optionValue){
-				
-				var optionValueView = new App.Views.OptionValueItem({ model: optionValue });
-				var _view = optionValueView.render();
-				that.$el.append(_view.el);
-				$el = _view.$el;
-				optionValue.set('position', $el.index());
+					
+					//console.log(optionValue);
+					that.addOptionValue(optionValue);
 				
 				});
 			return this;
 		},
+
+		addOptionValue: function(value){
+			
+			//var that = this;
+
+			var optionValueView = new App.Views.OptionValueItem({ model: value });
+			var _view = optionValueView.render();
+			
+			this.$el.append(_view.el);
+			this.$el.find('.wpcart-product-option-value').ineditor();
+			
+			$el = _view.$el;
+			value.set('position', $el.index());
+
+		}
 
 	});
 
@@ -304,7 +260,6 @@
 			var value = this.$el.find('.wpcart-product-option-value').html();
 			this.model.set('value', value);
 
-			console.log(this.model.get("value") + this.$el.index());
 		}
 
 
@@ -312,20 +267,10 @@
 
 	$( "#wpcart-product-options" ).sortable();
 
-	function orderOptions(){
-
-
-	}
-
-
 	//Let's start this thing
 		
-	new App.Views.OptionsSandbox;
+	sandbox = new App.Views.OptionsSandbox;
 	vent.trigger('product:options');
-	$('.wpcart-product-option-value').ineditor();
-	$('.wpcart-product-option-name').ineditor();
+	//$('.wpcart-product-option-name').ineditor();
 
 		})();
-	</script>
-</body>
-</html>
