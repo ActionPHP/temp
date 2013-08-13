@@ -61,8 +61,9 @@
 		render: function(){
 
 			var options = '[{"id":"1","name":"Size","options":[{"id":"2","value":"M","position":"2"},{"id":"1","value":"S","position":"1"},{"id":"3","value":"L","position":"3"}],"position":"1"}					]';
-
 			options = JSON.parse(options);
+
+			//This collection is the main collection for production options.
 			this.collection = new App.Collections.Options(options);
 
 			this.displayOptions(this.collection.models);
@@ -100,17 +101,24 @@
 			var _view = optionView.render();
 			
 			this.$el.append(_view.el);
-			this.$el.find('.wpcart-product-option-name').ineditor();
+			this.$el.find('.wpcart-product-option-name').ineditor({},
+				function(){
+
+					console.log($(this).val());
+				});
 
 
 			var $el = _view.$el;
 			option.set('position', $el.index());
+			this.collection.add(option);
+
+			this.saveOptions();
 
 		},
 
 		saveOptions: function(){
 
-			//console.log(this.collection.toJSON());
+			console.log(this.collection.toJSON());
 		},
 
 		createOption: function(){
@@ -119,8 +127,14 @@
 			var optionValues = Array();
 			var option = new App.Models.Option({ name: optionName });
 
-			sandbox.addOption(option);
+			this.addOption(option);
+			$('#wpcart-options-create-name').val('');
 
+		},
+
+		getOptions: function(){
+
+			return this.collection;
 		}
 
 
@@ -135,7 +149,7 @@
 		initialize: function(){
 
 			this.optionValueView = new App.Views.OptionValues();
-			console.log(this);
+			vent.on('optionValues:set', this.setOptionValues, this);
 
 		},
 
@@ -164,7 +178,6 @@
 				}
 			});
 
-			console.log(this);
 			this.optionValueView.collection = optionValues;
 			this.optionValueView.$el = optionValueList;
 
@@ -185,8 +198,15 @@
 
 			var optionValue = new App.Models.OptionValue({id: null, value: null});
 			this.optionValueView.addOptionValue(optionValue);
-
+			console.log('From Option');
+			console.log(this.optionValueView.getOptionValues().toJSON());
 		},
+
+		setOptionValues: function(){
+
+			this.model.set('options',this.optionValueView.getOptionValues());
+
+		}
 
 
 
@@ -215,17 +235,26 @@
 
 		addOptionValue: function(value){
 			
-			//var that = this;
-
+			var that = this;
 			var optionValueView = new App.Views.OptionValueItem({ model: value });
 			var _view = optionValueView.render();
 			
 			this.$el.append(_view.el);
-			this.$el.find('.wpcart-product-option-value').ineditor();
+			this.$el.find('.wpcart-product-option-value').ineditor({}, function(){
+
+				value.set('value', $(this).val());
+				vent.trigger('optionValues:set');
+			});
 			
 			$el = _view.$el;
 			value.set('position', $el.index());
+			this.collection.add(value);
+			//console.log(this.getOptionValues().toJSON());
+		},
 
+		getOptionValues: function(){
+
+			return this.collection;
 		}
 
 	});
@@ -253,7 +282,6 @@
 
 			//Let's get the index of the option value in the list, and use that as it's
 			// position.
-			// 
 			this.model.set('position', this.$el.index());
 
 			//Let's get the actual value from the 'wpcart-product-option-value' span
@@ -273,4 +301,11 @@
 	vent.trigger('product:options');
 	//$('.wpcart-product-option-name').ineditor();
 
+	$('#wpcart-save-product-options-button').click(function(){
+
+		var options = sandbox.getOptions();
+		console.clear();
+		console.log('Saving product options...');
+		console.log(JSON.stringify(options.toJSON()));
+	})
 		})();
