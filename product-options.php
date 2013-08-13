@@ -1,6 +1,6 @@
 <?php
 
-  /**
+	/**
 	 * 
 	 * 	Ok so we have two Models
 	 *  - ProductOption
@@ -33,7 +33,7 @@
 			class="btn btn-default" id="wpcart-options-create-button" ><i class="icon-plus"></i>Create new option</button>
 			</li>
 		</ul>
-		<button class="btn btn-primary" >Save</button>
+		<button class="btn btn-primary" id="wpcart-save-product-options-button">Save</button>
 	</div>
 
 
@@ -53,9 +53,8 @@
 	<script type="text/javascript">
 	//Simple inline edit
 	
-	$.fn.ineditor = function(){
+	$.fn.ineditor = function(options,callback){
 
-		console.log($(this).html());
 
 		this.click(function(){
 			
@@ -82,6 +81,11 @@
 						_edited.html(_edited_value);
 					
 						_edited.removeClass('actionphp-ineditor');
+
+
+						if (typeof callback == 'function') { // make sure the callback is a function
+				     	   callback.call(this); // brings the scope to the callback
+				    	}
 
 					});
 			} 
